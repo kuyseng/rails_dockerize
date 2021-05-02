@@ -1,0 +1,128 @@
+version: "2.4"
+
+# why we need to define network? let use default
+# networks:
+#   net:
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: ./.dockerdev/Dockerfile
+    args:
+      RUBY_VERSION: "2.6.6-slim-buster"
+      NODE_MAJOR: "14"
+      YARN_VERSION: "1.22.5"
+      BUNDLER_VERSION: "2.2.16"
+  image: app-dev:1.0.0
+  # user: $(id -u):$(id -g)
+  tmpfs:
+    - /tmp
+
+x-backend: &backend
+  <<: *app
+  stdin_open: true
+  tty: true
+  volumes:
+    - .:/app:cached
+    - rails_cache:/app/tmp/cache
+    - bundle:/usr/local/bundle
+    - node_modules:/app/node_modules
+    - packs:/app/public/packs
+    - .dockerdev/.psqlrc:/root/.psqlrc:ro
+    - ~/.ssh:/root/.ssh:ro
+  environment:
+    - NODE_ENV=${NODE_ENV:-development}
+    - RAILS_ENV=${RAILS_ENV:-development}
+    - DB_HOST=db
+
+    - WEBPACKER_DEV_SERVER_HOST=webpacker
+    - HISTFILE=/app/log/.bash_history
+    - EDITOR=vi
+
+    - REDIS_URL=redis://redis:6379/1
+  env_file:
+    - .env/database
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *backend
+    command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
+    ports:
+      - "3000:3000"
+
+  sidekiq:
+    <<: *backend
+    command: bin/bundle exec sidekiq -C config/sidekiq.yml
+
+  db:
+    image: mysql:5.7
+    mem_limit: 300m
+    ports:
+      - 3306
+    volumes:
+      - db:/var/lib/mysql
+    env_file:
+      - .env/database
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  db:
+    image: postgres:12.4
+    volumes:
+      - .dockerdev/.psqlrc:/root/.psqlrc:ro
+      - db:/var/lib/postgresql/data
+      - ./log:/root/log:cached
+    environment:
+      - PSQL_HISTFILE=/root/log/.psql_history
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    env_file:
+      - .env/database
+    ports:
+      - 5432
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+  redis:
+    image: redis
+    volumes:
+      - redis:/var/lib/redis/data
+    ports:
+      - 6379
+    networks:
+      - net
+    healthcheck:
+      test: redis-cli ping
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  webpacker:
+    <<: *app
+    command: ./bin/webpack-dev-server
+    ports:
+      - "3035:3035"
+    volumes:
+      - .:/app:cached
+      - bundle:/usr/local/bundle
+      - node_modules:/app/node_modules
+      - packs:/app/public/packs
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - RAILS_ENV=${RAILS_ENV:-development}
+      - WEBPACKER_DEV_SERVER_HOST=0.0.0.0
+
+volumes:
+  db:
+  redis:
+  bundle:
+  node_modules:
+  rails_cache:
+  packs:

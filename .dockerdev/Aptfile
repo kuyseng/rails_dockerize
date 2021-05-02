@@ -1,0 +1,29 @@
+# gem sqlite3
+sqlite3 libsqlite3-dev
+
+# gem mysql2
+libmysqlclient-dev
+
+# ? mysql v8+
+libmariadb-dev-compat libmariadb-dev
+
+# gem: pg, which activerecord4-redshift-adapter depends
+libpq-dev
+
+# ??
+libxslt-dev libxml2-dev shared-mime-info
+
+# gem: pdf?
+wkhtmltopdf
+
+# gem: capistrano for ssh
+openssh-client
+
+# gem: capybara-webki
+g++ qt5-default libqt5webkit5-dev gstreamer1.0-plugins-base gstreamer1.0-tools gstreamer1.0-x
+
+# gem: exif
+libexif-dev
+
+# gem: RMagick (2.13.4)
+imagemagick libmagickcore-dev libmagickwand-dev

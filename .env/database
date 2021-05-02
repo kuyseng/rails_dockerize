@@ -1,0 +1,9 @@
+# mysql
+MYSQL_USER=test
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=app
+
+# postgres
+POSTGRES_USER=test
+POSTGRES_PASSWORD=password
+POSTGRES_DB=app
