@@ -13,7 +13,7 @@ x-app: &app
       NODE_MAJOR: "14"
       YARN_VERSION: "1.22.5"
       BUNDLER_VERSION: "2.2.16"
-  image: app-dev:1.0.0
+  image: app_name-dev:1.0.0
   # user: $(id -u):$(id -g)
   tmpfs:
     - /tmp
@@ -51,16 +51,19 @@ x-backend: &backend
 services:
   app:
     <<: *backend
+    container_name: app_name_app
     command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
     ports:
       - "3000:3000"
 
   sidekiq:
     <<: *backend
+    container_name: app_name_sidekiq
     command: bin/bundle exec sidekiq -C config/sidekiq.yml
 
   db:
     image: mysql:5.7
+    container_name: app_name_db
     mem_limit: 300m
     ports:
       - 3306
@@ -75,6 +78,7 @@ services:
 
   db:
     image: postgres:12.4
+    container_name: app_name_db
     volumes:
       - .dockerdev/.psqlrc:/root/.psqlrc:ro
       - db:/var/lib/postgresql/data
@@ -92,6 +96,7 @@ services:
 
   redis:
     image: redis
+    container_name: app_name_redis
     volumes:
       - redis:/var/lib/redis/data
     ports:
@@ -106,6 +111,7 @@ services:
 
   webpacker:
     <<: *app
+    container_name: app_name_webpacker
     command: ./bin/webpack-dev-server
     ports:
       - "3035:3035"
