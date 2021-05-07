@@ -11,6 +11,20 @@ docker run -it --rm --user "$(id -u):$(id -g)" -v "$PWD":/usr/src/app -w /usr/sr
 $ gem install rails -v 6.1.3
 $ rails new . --skip-bundle
 ```
+
+- **Install certs: [Learn more](https://mac-blog.org.ua/docker-localhost-ssl/)**
+```
+brew install mkcert
+brew install nss
+
+mkcert -install
+
+# need to generate these certs for every development pc
+cd .dockerdev/certs
+mkcert -cert-file vcap.me.crt -key-file vcap.me.key "*.vcap.me"
+cp "$(mkcert -CAROOT)/rootCA.pem" ca.crt
+```
+
 - **change docker-compose**
 1. RUBY_VERSION  e.g 2.6.6-slim-buster
 2. NODE_MAJOR
@@ -32,6 +46,12 @@ docker-compose run --rm app bash
 
 $ rails webpacker:install
 $ rake db:create db:migrate db:seed
+```
+
+- **Add new host for rails 6+**
+```ssh
+# config/development.rb
+config.hosts << "app_name.vcap.me"
 ```
 
 - **run the project**
