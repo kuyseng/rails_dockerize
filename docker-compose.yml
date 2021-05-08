@@ -25,6 +25,7 @@ x-backend: &backend
     - node_modules:/app/node_modules
     - packs:/app/public/packs
     - .dockerdev/.psqlrc:/root/.psqlrc:ro
+    - .dockerdev/.bashrc:/root/.bashrc:ro
     - ~/.ssh:/root/.ssh:ro
   environment:
     - NODE_ENV=${NODE_ENV:-development}
